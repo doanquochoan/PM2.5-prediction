@@ -5,9 +5,9 @@ from keras.saving import load_model as load_keras_model
 import pandas as pd
 import numpy as np
 
-st.title("Dự báo nồng độ bụi PM2.5 tại thành phố Hồ Chí Minh") #🌫️
+st.markdown("# Dự báo nồng độ bụi PM<sub>2.5</sub> tại thành phố Hồ Chí Minh", unsafe_allow_html=True) #🌫️
 st.image('pm2-5-icon.jpg', width=250)
-st.markdown("Nồng độ PM2.5 được dự báo dựa trên các thông số khí tượng")
+st.markdown("Nồng độ PM<sub>2.5</sub> được dự báo dựa trên các thông số khí tượng", unsafe_allow_html=True)
 
 predict_case = st.selectbox("Lựa chọn trường hợp dự đoán", 
                          ["Mô phỏng", "Sớm 1 ngày", "Sớm 3 ngày", "Sớm 5 ngày", "Sớm 7 ngày"])
@@ -69,6 +69,7 @@ elif predict_case == "Sớm 7 ngày":
         temperature = st.number_input("Nhiệt độ (°C)", min_value=-20.0, max_value=50.0, value=25.0, step=0.5)
     model_info = (model_file.get(predict_case), [humidity, temperature])
 ################################################################
+
 
 def load_model(model_name):
     # Load the model and scalers
@@ -173,7 +174,6 @@ def interpret_aqi(aqi_value):
     else:
         return {"mức độ": "Không xác định", "ảnh hưởng sức khỏe": "Ngoài phạm vi đo lường."}
 
-
 def get_aqi_color(level):
     colors = {
         "Tốt": "#00e400",         # Xanh lá
@@ -190,31 +190,64 @@ def get_aqi_color(level):
 # Make prediction
 st.markdown("""
     <style>
-    div.stButton > button {
+    div.stButton > button {streamlit 
         border: 2px solid #666869;
         border-radius: 10px;
         font-weight: bold;
+        font-size: 200px;
         padding: 12px 24px;
         background-color: #e3e4e6;
+        margin: auto;
+        display: block;
+        width: 100%;
+        transition: 0.3s;
+    }
+    .stButton>button:hover {
+        background-color: #b9c4c7;  
+        color: white;  /* White text on hover */
     }
     </style>
 """, unsafe_allow_html=True)
-if st.button("**Dự đoán PM2.5**"):
+
+# Centered button
+col1, col2, col3 = st.columns(3)
+with col2:
+    predict_button = st.button("**Kết quả**")
+
+if not predict_button:
+    st.divider()
+    st.markdown("**Chú thích**")
+    st.markdown(
+            """
+            1. Ứng dụng là một phần của luận án của NCS Nguyễn Phúc Hiếu với đề tài: \n
+            *“Nghiên cứu ứng dụng phương pháp học máy và học sâu dự báo nồng độ bụi PM<sub>2.5</sub> - Trường hợp nghiên cứu cho thành phố Hồ Chí Minh”* \n
+            2. Nguồn cung cấp dữ liệu: Trạm đo Lãnh sự quán Hoa Kỳ tại TP.HCM và Trạm khí tượng Tân Sơn Hòa
+            3. Phương pháp tính AQI: Theo Quyết định 1459/QĐ-TCMT năm 2019 về hướng dẫn kỹ thuật tính toán và công bố chỉ số chất lượng không khí Việt Nam (VN_AQI) do Tổng cục trưởng Tổng cục Môi trường ban hành.
+            4. Thông tin liên hệ: NCS Nguyễn Phúc Hiếu - phuchieu50@gmail.com
+            """, 
+            unsafe_allow_html=True
+        )
+
+elif predict_button: 
     pm25_pred = make_prediction(model_info)
-    st.subheader("Kết quả dự đoán")
-    st.markdown("**Nồng độ PM2.5 dự đoán**")
+    # st.divider()
+    # st.subheader("Kết quả dự đoán")
+    if predict_case != "Mô phỏng":
+        st.markdown(f"**Nồng độ PM<sub>2.5</sub> (dự báo {predict_case.lower()})**", unsafe_allow_html=True)
+    else:
+        st.markdown(f"**Nồng độ PM<sub>2.5</sub> ({predict_case.lower()})**", unsafe_allow_html=True)
     st.success(f"{pm25_pred:.2f} μg/m³")
     
     # Tính AQI từ PM2.5 dự đoán
     aqi_value = calculate_aqi_from_pm25(pm25_pred)
-    st.markdown("**Giá trị AQI tương ứng***")
+    st.markdown("**Giá trị AQI tương ứng**")
     st.success(f"{aqi_value}")
     
     # Diễn giải kết quả AQI
     result = interpret_aqi(aqi_value)
     for key, value in result.items():
         if key == "mức độ":
-            aqi_level = value
+            aqi_level = value 
             aqi_color = get_aqi_color(aqi_level)
             st.markdown("**Chất lượng không khí**")
             st.markdown(
@@ -260,7 +293,8 @@ if st.button("**Dự đoán PM2.5**"):
             )
     
     ###########################
-    st.subheader("Bảng tham chiếu chất lượng không khí")
+    # st.subheader("Bảng tham chiếu chất lượng không khí")
+    st.markdown("**Bảng tham chiếu chất lượng không khí**")
     # Dữ liệu bảng AQI
     aqi_data = {
         "Khoảng giá trị AQI": ["0 - 50", "51 - 100", "101 - 150", "151 - 200", "201 - 300", "301 - 500"],
@@ -278,12 +312,18 @@ if st.button("**Dự đoán PM2.5**"):
     styled_df = aqi_df.style.apply(lambda row: [apply_style(row[col], rgb_colors[row.name]) for col in aqi_df.columns], axis=1)
     # Hiển thị bảng
     st.dataframe(styled_df, hide_index=True, width=400)
-
-    st.subheader("Chú thích")
-    st.text("""*: Giá trị AQI được tính dựa trên nồng độ PM2.5. 
-                Theo công thức trong Quyết định số 1459/QĐ-TCMT năm 2019 về hướng dẫn kỹ thuật tính toán và công bố chỉ số chất lượng không khí Việt Nam (VN_AQI) do Tổng cục trưởng Tổng cục Môi trường ban hành""")
-
-    
+    st.divider()
+    st.markdown("**Chú thích**")
+    st.markdown(
+        """
+        1. Ứng dụng là một phần của luận án của NCS Nguyễn Phúc Hiếu với đề tài: \n
+        *“Nghiên cứu ứng dụng phương pháp học máy và học sâu dự báo nồng độ bụi PM<sub>2.5</sub> - Trường hợp nghiên cứu cho thành phố Hồ Chí Minh”* \n
+        2. Nguồn cung cấp dữ liệu: Trạm đo Lãnh sự quán Hoa Kỳ tại TP.HCM và Trạm khí tượng Tân Sơn Hòa
+        3. Phương pháp tính AQI: Theo Quyết định 1459/QĐ-TCMT năm 2019 về hướng dẫn kỹ thuật tính toán và công bố chỉ số chất lượng không khí Việt Nam (VN_AQI) do Tổng cục trưởng Tổng cục Môi trường ban hành.
+        4. Thông tin liên hệ: NCS Nguyễn Phúc Hiếu - phuchieu50@gmail.com
+        """,
+        unsafe_allow_html=True
+    )
 ################################################################
 
 
